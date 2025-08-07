@@ -51,6 +51,10 @@ def parse_resume_from_url(pdf_url: str = Query(..., description="Public PDF resu
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.get("/")
+def root():
+    return {"message": "Resume Parser API running"}
+
 # Local dev runner
 if __name__ == "__main__":
     import uvicorn
