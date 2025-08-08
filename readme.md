@@ -1,7 +1,3 @@
-Here’s a **polished, professional `README.md`** that positions your project as a strong portfolio piece while keeping it technical and impressive:
-
----
-
 # AI Resume Parsing API 🚀
 
 An **AI-powered resume analysis API** built with **FastAPI**, **PyMuPDF**, and **Google Gemini 1.5 Flash**.
@@ -82,7 +78,7 @@ GET /api/parse-resume?pdf_url=<PUBLIC_PDF_LINK>
 **Example Request:**
 
 ```bash
-curl "http://localhost:8000/api/parse-resume?pdf_url=https://example.com/resume.pdf"
+"http://localhost:8000/api/parse-resume?pdf_url=https://example.com/resume.pdf"
 ```
 
 **Example Response:**
