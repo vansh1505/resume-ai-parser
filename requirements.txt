@@ -3,3 +3,5 @@ uvicorn
 requests
 PyMuPDF
 python-multipart
+google-generativeai
+python-dotenv

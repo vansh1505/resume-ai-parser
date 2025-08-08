@@ -1,9 +1,12 @@
+import json
+from dotenv import load_dotenv
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import fitz  # PyMuPDF
+import google.generativeai as genai
 import requests
-import re
 import os
+import re
 
 app = FastAPI()
 
@@ -12,26 +15,15 @@ origins = ["https://uniplace.vercel.app"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Resume parser
-def parse_resume(text: str):
-    email = re.findall(r"\b[\w\.-]+@[\w\.-]+\.\w+\b", text)
-    phone = re.findall(r"\b\d{10}\b", text)
-    skills_list = ['python', 'java', 'c++', 'html', 'css',
-                   'javascript', 'react', 'node.js', 'sql', 'mongodb']
-    text = text.lower()
-    found_skills = [skill for skill in skills_list if skill in text]
+load_dotenv()
+genai.configure(api_key=os.getenv("API_KEY"))
 
-    return {
-        "email": email[0] if email else None,
-        "phone": phone[0] if phone else None,
-        "skills": found_skills
-    }
 
 # API endpoint
 @app.get("/api/parse-resume")
@@ -44,9 +36,44 @@ def parse_resume_from_url(pdf_url: str = Query(..., description="Public PDF resu
         text = "".join(page.get_text() for page in doc)
         doc.close()
 
+        prompt = f"""
+            You are a resume evaluator.
+            Task:
+            1. Decide if the resume is appropriate for general professional use. Output only True or False.
+            2. Score the resume from 0 to 100.
+            3. Extract all technical skills.
+            4. Rank the resume quality as: Best, Average, or Needs Improvement.
+            5. Suggest 3 improvements.
+            Return ONLY valid JSON, nothing else.
+            Return JSON:
+                {{
+                  "appropriate": true or false,
+                  "score": 0-100,
+                  "skills": ["Python", "FastAPI", "Machine Learning" ...],
+                  "rank": ["Best","Average", "Needs Improvement"],
+                  "improvements": ["Add more project details", "Include a summary section", "Quantify achievements"]
+                }}
+            Resume text:
+            {text}
+            """
+
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+        raw_response = response.candidates[0].content.parts[0].text
+
+        cleaned_text = re.sub(r"```(?:json)?", "", raw_response).strip()
+
+        # Extract only JSON object from messy output
+        match = re.search(r"\{.*\}", cleaned_text, re.DOTALL)
+        if not match:
+            raise ValueError("No JSON object found in AI output")
+
+        parsed_json = json.loads(match.group(0))
+
+
         return {
             "status": "success",
-            "parsed_data": parse_resume(text)
+            "parsed_data": parsed_json,
         }
 
     except Exception as e:
