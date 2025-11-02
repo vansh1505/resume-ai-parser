@@ -58,8 +58,7 @@ def parse_resume_from_url(pdf_url: str = Query(..., description="Public PDF resu
             Resume text:
             {text}
             """
-
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("models/gemini-2.5-flash")
         response = model.generate_content(prompt)
         raw_response = response.candidates[0].content.parts[0].text
 
@@ -187,7 +186,7 @@ def ai_resume_builder(request: ResumeRequest):
             }}
             """
 
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("models/gemini-2.5-flash")
             response = model.generate_content(prompt)
             raw_response = response.candidates[0].content.parts[0].text
 
